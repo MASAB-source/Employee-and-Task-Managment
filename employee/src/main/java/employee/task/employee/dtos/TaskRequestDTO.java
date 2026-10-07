@@ -10,6 +10,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Data
 public class TaskRequestDTO {
 
     @NotBlank(message = "Task title is required")
