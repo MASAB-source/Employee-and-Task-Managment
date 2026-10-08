@@ -2,6 +2,7 @@ package employee.task.employee.service.impl;
 
 import employee.task.employee.domain.Employee;
 import employee.task.employee.domain.Task;
+import employee.task.employee.domain.TaskStatus;
 import employee.task.employee.dtos.EmployeeResponseDTO;
 import employee.task.employee.dtos.TaskRequestDTO;
 import employee.task.employee.dtos.TaskResponseDTO;
@@ -27,15 +28,16 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskResponseDTO createTask(TaskRequestDTO requestDTO) {
         Employee assignedEmployee = null;
-        if (requestDTO.getAssignedEmployeeId() != null) {
-            assignedEmployee = employeeRepository.findById(requestDTO.getAssignedEmployeeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requestDTO.getAssignedEmployeeId()));
+      
+        if (requestDTO.assignedEmployeeId() != null) {
+            assignedEmployee = employeeRepository.findById(requestDTO.assignedEmployeeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requestDTO.assignedEmployeeId()));
         }
 
         Task task = Task.builder()
-                .title(requestDTO.getTitle())
-                .description(requestDTO.getDescription())
-                .status(requestDTO.getStatus())
+                .title(requestDTO.title())
+                .description(requestDTO.description())
+                .status(requestDTO.status())
                 .assignedEmployee(assignedEmployee)
                 .build();
 
@@ -58,8 +60,7 @@ public class TaskServiceImpl implements TaskService {
         List<TaskResponseDTO> responseDTOs = new ArrayList<>();
 
         for (Task task : tasks) {
-            TaskResponseDTO dto = mapToResponseDTO(task);
-            responseDTOs.add(dto);
+            responseDTOs.add(mapToResponseDTO(task));
         }
 
         return responseDTOs;
@@ -72,8 +73,7 @@ public class TaskServiceImpl implements TaskService {
         List<TaskResponseDTO> responseDTOs = new ArrayList<>();
 
         for (Task task : tasks) {
-            TaskResponseDTO dto = mapToResponseDTO(task);
-            responseDTOs.add(dto);
+            responseDTOs.add(mapToResponseDTO(task));
         }
 
         return responseDTOs;
@@ -84,17 +84,17 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
 
-        if (requestDTO.getAssignedEmployeeId() != null) {
-            Employee assignedEmployee = employeeRepository.findById(requestDTO.getAssignedEmployeeId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requestDTO.getAssignedEmployeeId()));
+        if (requestDTO.assignedEmployeeId() != null) {
+            Employee assignedEmployee = employeeRepository.findById(requestDTO.assignedEmployeeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + requestDTO.assignedEmployeeId()));
             task.setAssignedEmployee(assignedEmployee);
         } else {
             task.setAssignedEmployee(null);
         }
 
-        task.setTitle(requestDTO.getTitle());
-        task.setDescription(requestDTO.getDescription());
-        task.setStatus(requestDTO.getStatus());
+        task.setTitle(requestDTO.title());
+        task.setDescription(requestDTO.description());
+        task.setStatus(requestDTO.status());
 
         Task updatedTask = taskRepository.save(task);
         return mapToResponseDTO(updatedTask);
@@ -108,23 +108,28 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.deleteById(id);
     }
 
-    private TaskResponseDTO mapToResponseDTO(Task task) {
-        EmployeeResponseDTO employeeDTO = null;
-        if (task.getAssignedEmployee() != null) {
-            employeeDTO = EmployeeResponseDTO.builder()
-                    .id(task.getAssignedEmployee().getId())
-                    .fullName(task.getAssignedEmployee().getFullName())
-                    .email(task.getAssignedEmployee().getEmail())
-                    .role(task.getAssignedEmployee().getRole())
-                    .build();
-        }
+   private TaskResponseDTO mapToResponseDTO(Task task) {
+    EmployeeResponseDTO employeeDTO = null;
+    if (task.getAssignedEmployee() != null) {
+        Employee emp = task.getAssignedEmployee();
+        String roleStr = emp.getRole() != null ? emp.getRole().name() : null;
 
-        return TaskResponseDTO.builder()
-                .id(task.getId())
-                .title(task.getTitle())
-                .description(task.getDescription())
-                .status(task.getStatus())
-                .assignedEmployee(employeeDTO)
-                .build();
+        employeeDTO = new EmployeeResponseDTO(
+                emp.getId(),
+                emp.getFullName(),
+                emp.getEmail(),
+                roleStr
+        );
     }
+
+    String statusStr = task.getStatus() != null ? task.getStatus().name() : null;
+
+   return new TaskResponseDTO(
+        task.getId(),
+        task.getTitle(),
+        task.getDescription(),
+        task.getStatus(),
+        employeeDTO
+);
+}
 }

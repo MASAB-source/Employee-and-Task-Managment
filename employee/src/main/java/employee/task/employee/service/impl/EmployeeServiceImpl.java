@@ -1,6 +1,7 @@
 package employee.task.employee.service.impl;
 
 import employee.task.employee.domain.Employee;
+import employee.task.employee.domain.Role;
 import employee.task.employee.dtos.EmployeeRequestDTO;
 import employee.task.employee.dtos.EmployeeResponseDTO;
 import employee.task.employee.exception.BadRequestException;
@@ -23,15 +24,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeResponseDTO createEmployee(EmployeeRequestDTO requestDTO) {
-        if (employeeRepository.existsByEmail(requestDTO.getEmail())) {
-            throw new BadRequestException("Email already in use: " + requestDTO.getEmail());
+        if (employeeRepository.existsByEmail(requestDTO.email())) {
+            throw new BadRequestException("Email already in use: " + requestDTO.email());
         }
 
+        Role roleEnum = requestDTO.role() != null ? requestDTO.role() : Role.ROLE_EMPLOYEE;
+
         Employee employee = Employee.builder()
-                .fullName(requestDTO.getFullName())
-                .email(requestDTO.getEmail())
-                .password(requestDTO.getPassword())
-                .role(requestDTO.getRole())
+                .fullName(requestDTO.fullName())
+                .email(requestDTO.email())
+                .password(requestDTO.password())
+                .role(roleEnum)
                 .build();
 
         Employee savedEmployee = employeeRepository.save(employee);
@@ -53,8 +56,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         List<EmployeeResponseDTO> responseDTOs = new ArrayList<>();
 
         for (Employee employee : employees) {
-            EmployeeResponseDTO dto = mapToResponseDTO(employee);
-            responseDTOs.add(dto);
+            responseDTOs.add(mapToResponseDTO(employee));
         }
 
         return responseDTOs;
@@ -65,9 +67,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
 
-        employee.setFullName(requestDTO.getFullName());
-        employee.setEmail(requestDTO.getEmail());
-        employee.setRole(requestDTO.getRole());
+        employee.setFullName(requestDTO.fullName());
+        employee.setEmail(requestDTO.email());
+
+        if (requestDTO.role() != null) {
+            employee.setRole(requestDTO.role());
+        }
 
         Employee updatedEmployee = employeeRepository.save(employee);
         return mapToResponseDTO(updatedEmployee);
@@ -81,12 +86,14 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.deleteById(id);
     }
 
-    private EmployeeResponseDTO mapToResponseDTO(Employee employee) {
-        return EmployeeResponseDTO.builder()
-                .id(employee.getId())
-                .fullName(employee.getFullName())
-                .email(employee.getEmail())
-                .role(employee.getRole())
-                .build();
-    }
+   private EmployeeResponseDTO mapToResponseDTO(Employee employee) {
+    String roleStr = employee.getRole() != null ? employee.getRole().name() : null;
+
+    return new EmployeeResponseDTO(
+            employee.getId(),
+            employee.getFullName(),
+            employee.getEmail(),
+            roleStr // Pass String instead of Role
+    );
+}
 }
