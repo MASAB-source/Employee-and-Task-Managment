@@ -1,5 +1,6 @@
 package employee.task.employee.controller;
 
+import employee.task.employee.dtos.PagedResponseDTO;
 import employee.task.employee.dtos.TaskRequestDTO;
 import employee.task.employee.dtos.TaskResponseDTO;
 import employee.task.employee.service.TaskService;
@@ -8,8 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -20,34 +19,39 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<TaskResponseDTO> createTask(@Valid @RequestBody TaskRequestDTO requestDTO) {
-        TaskResponseDTO created = taskService.createTask(requestDTO);
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
+        return new ResponseEntity<>(taskService.createTask(requestDTO), HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TaskResponseDTO> getTaskById(@PathVariable Long id) {
-        TaskResponseDTO task = taskService.getTaskById(id);
-        return ResponseEntity.ok(task);
+        return ResponseEntity.ok(taskService.getTaskById(id));
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponseDTO>> getAllTasks() {
-        List<TaskResponseDTO> tasks = taskService.getAllTasks();
-        return ResponseEntity.ok(tasks);
+    public ResponseEntity<PagedResponseDTO<TaskResponseDTO>> getAllTasks(
+            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(value = "sortBy", defaultValue = "id", required = false) String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = "asc", required = false) String sortDir,
+            @RequestParam(value = "search", required = false) String search
+    ) {
+        return ResponseEntity.ok(taskService.getAllTasks(page, size, sortBy, sortDir, search));
     }
 
     @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<List<TaskResponseDTO>> getTasksByEmployeeId(@PathVariable Long employeeId) {
-        List<TaskResponseDTO> tasks = taskService.getTasksByEmployeeId(employeeId);
-        return ResponseEntity.ok(tasks);
+    public ResponseEntity<PagedResponseDTO<TaskResponseDTO>> getTasksByEmployeeId(
+            @PathVariable Long employeeId,
+            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(value = "sortBy", defaultValue = "id", required = false) String sortBy,
+            @RequestParam(value = "sortDir", defaultValue = "asc", required = false) String sortDir
+    ) {
+        return ResponseEntity.ok(taskService.getTasksByEmployeeId(employeeId, page, size, sortBy, sortDir));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponseDTO> updateTask(
-            @PathVariable Long id, 
-            @Valid @RequestBody TaskRequestDTO requestDTO) {
-        TaskResponseDTO updated = taskService.updateTask(id, requestDTO);
-        return ResponseEntity.ok(updated);
+    public ResponseEntity<TaskResponseDTO> updateTask(@PathVariable Long id, @Valid @RequestBody TaskRequestDTO requestDTO) {
+        return ResponseEntity.ok(taskService.updateTask(id, requestDTO));
     }
 
     @DeleteMapping("/{id}")
