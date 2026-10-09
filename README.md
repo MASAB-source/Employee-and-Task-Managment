@@ -22,7 +22,7 @@ Before setting up and running the project, ensure you have the following install
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone <https://github.com/MASAB-source/Employee-and-Task-Managment.git>
 cd employee
 
 ---
